@@ -146,8 +146,9 @@ public class Board
                 if (!cell.IsEmpty) continue;
 
                 NormalItem item = new NormalItem();
+                NormalItem.eNormalType type = GetBestTypeForCell(cell);
 
-                item.SetType(Utils.GetRandomNormalType());
+                item.SetType(/*Utils.GetRandomNormalType()*/type);
                 item.SetView();
                 item.SetViewRoot(m_root);
 
@@ -156,7 +157,89 @@ public class Board
             }
         }
     }
+    #region Fill Gap Helpers
 
+    private NormalItem.eNormalType GetBestTypeForCell(Cell cell)
+    {
+        List<NormalItem.eNormalType> blockedTypes = GetNeighbourTypes(cell);
+        Dictionary<NormalItem.eNormalType, int> counts = CountNormalItemTypesOnBoard();
+
+        List<NormalItem.eNormalType> allTypes = Enum.GetValues(typeof(NormalItem.eNormalType))
+            .Cast<NormalItem.eNormalType>()
+            .ToList();
+
+        List<NormalItem.eNormalType> validTypes = allTypes
+            .Where(t => !blockedTypes.Contains(t))
+            .ToList();
+
+        if (validTypes.Count == 0)
+        {
+            validTypes = allTypes;
+        }
+
+        int minCount = validTypes.Min(t => counts[t]);
+
+        List<NormalItem.eNormalType> bestTypes = validTypes
+            .Where(t => counts[t] == minCount)
+            .ToList();
+
+        int rnd = UnityEngine.Random.Range(0, bestTypes.Count);
+        return bestTypes[rnd];
+    }
+
+    private List<NormalItem.eNormalType> GetNeighbourTypes(Cell cell)
+    {
+        List<NormalItem.eNormalType> result = new List<NormalItem.eNormalType>();
+
+        AddNeighbourType(cell.NeighbourUp, result);
+        AddNeighbourType(cell.NeighbourRight, result);
+        AddNeighbourType(cell.NeighbourBottom, result);
+        AddNeighbourType(cell.NeighbourLeft, result);
+
+        return result;
+    }
+
+    private void AddNeighbourType(Cell neighbour, List<NormalItem.eNormalType> result)
+    {
+        if (neighbour == null) return;
+        if (neighbour.IsEmpty) return;
+
+        NormalItem normalItem = neighbour.Item as NormalItem;
+        if (normalItem == null) return;
+
+        if (!result.Contains(normalItem.ItemType))
+        {
+            result.Add(normalItem.ItemType);
+        }
+    }
+
+    private Dictionary<NormalItem.eNormalType, int> CountNormalItemTypesOnBoard()
+    {
+        Dictionary<NormalItem.eNormalType, int> counts = new Dictionary<NormalItem.eNormalType, int>();
+
+        foreach (NormalItem.eNormalType type in Enum.GetValues(typeof(NormalItem.eNormalType)))
+        {
+            counts[type] = 0;
+        }
+
+        for (int x = 0; x < boardSizeX; x++)
+        {
+            for (int y = 0; y < boardSizeY; y++)
+            {
+                Cell cell = m_cells[x, y];
+                if (cell == null || cell.IsEmpty) continue;
+
+                NormalItem item = cell.Item as NormalItem;
+                if (item == null) continue;
+
+                counts[item.ItemType]++;
+            }
+        }
+
+        return counts;
+    }
+
+    #endregion
     internal void ExplodeAllItems()
     {
         for (int x = 0; x < boardSizeX; x++)

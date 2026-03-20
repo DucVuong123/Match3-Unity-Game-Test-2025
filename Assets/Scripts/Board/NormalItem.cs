@@ -59,4 +59,24 @@ public class NormalItem : Item
 
         return it != null && it.ItemType == this.ItemType;
     }
+
+    public override void SetView()
+    {
+        base.SetView();
+        ApplySkin();
+    }
+    private void ApplySkin()
+    {
+        if (View == null) return;
+        if (GameManager.Instance.m_FishNormalItemSkin == null) return;
+
+        Sprite sprite = GameManager.Instance.m_FishNormalItemSkin.GetSprite(ItemType);
+        if (sprite == null) return;
+
+        SpriteRenderer sr = View.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.sprite = sprite;
+        }
+    }
 }

@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using Minigame.Mathch3;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance { get; private set; }
     public event Action<eStateGame> StateChangedAction = delegate { };
 
     public enum eLevelMode
@@ -37,6 +39,7 @@ public class GameManager : MonoBehaviour
 
 
     private GameSettings m_gameSettings;
+    public NormalItemSkinData m_FishNormalItemSkin;
 
 
     private BoardController m_boardController;
@@ -44,17 +47,24 @@ public class GameManager : MonoBehaviour
     private UIMainManager m_uiMenu;
 
     private LevelCondition m_levelCondition;
+    private eLevelMode m_currentLevelType;
 
     private void Awake()
     {
+        Instance = this;
+
         State = eStateGame.SETUP;
 
         m_gameSettings = Resources.Load<GameSettings>(Constants.GAME_SETTINGS_PATH);
+        m_FishNormalItemSkin = Resources.Load<NormalItemSkinData>(Constants.NORMAL_ITEM_SKIN_DATA_PATH);
 
         m_uiMenu = FindObjectOfType<UIMainManager>();
         m_uiMenu.Setup(this);
     }
-
+    private void OnDestroy()
+    {
+        Instance = null;
+    }
     void Start()
     {
         State = eStateGame.MAIN_MENU;
@@ -101,7 +111,11 @@ public class GameManager : MonoBehaviour
 
         State = eStateGame.GAME_STARTED;
     }
-
+    public void RestartLevel()
+    {
+        ClearLevel();
+        LoadLevel(m_currentLevelType);
+    }
     public void GameOver()
     {
         StartCoroutine(WaitBoardController());
@@ -114,6 +128,13 @@ public class GameManager : MonoBehaviour
             m_boardController.Clear();
             Destroy(m_boardController.gameObject);
             m_boardController = null;
+        }
+
+        if (m_levelCondition != null)
+        {
+            m_levelCondition.ConditionCompleteEvent -= GameOver;
+            Destroy(m_levelCondition);
+            m_levelCondition = null;
         }
     }
 

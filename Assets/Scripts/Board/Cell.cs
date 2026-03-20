@@ -78,11 +78,13 @@ public class Cell : MonoBehaviour
 
     internal void AnimateItemForHint()
     {
+        if(Item == null) return;
         Item.AnimateForHint();
     }
 
     internal void StopHintAnimation()
     {
+        if (Item == null) return;
         Item.StopAnimateForHint();
     }
 
