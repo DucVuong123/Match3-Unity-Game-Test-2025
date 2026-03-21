@@ -31,6 +31,9 @@ public class BoardController : MonoBehaviour
 
     private bool m_gameOver;
 
+    private Cell m_startCell;
+    private Collider2D m_startCell_Collider;
+
     public void StartGame(GameManager gameManager, GameSettings gameSettings)
     {
         m_gameManager = gameManager;
@@ -90,6 +93,8 @@ public class BoardController : MonoBehaviour
             var hit = Physics2D.Raycast(m_cam.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
             if (hit.collider != null)
             {
+                m_startCell = hit.collider.GetComponent<Cell>();
+                m_startCell_Collider = hit.collider;
                 m_isDragging = true;
                 m_hitCollider = hit.collider;
             }
@@ -109,8 +114,19 @@ public class BoardController : MonoBehaviour
                 {
                     StopHints();
 
-                    Cell c1 = m_hitCollider.GetComponent<Cell>();
-                    Cell c2 = hit.collider.GetComponent<Cell>();
+                    // Đoạn này lặp lại việc GetComponent quá nhiều 
+                    //Cell c1 = m_hitCollider.GetComponent<Cell>(); 
+                    // Cell c2 = hit.collider.GetComponent<Cell>();
+
+                    // Cải thiện bằng cách lúc đầu lấy luôn cell đó và lưu vào m_startCell
+                    // kiểm tra xem collider của hit lúc drag có khác với collider của hit lúc start thì mới GetComponent
+                    Cell c1 = m_startCell;
+                    Cell c2 = c1;
+
+                    if (hit.collider != null && hit.collider != m_startCell_Collider)
+                    {
+                        c2 = hit.collider.GetComponent<Cell>();
+                    }
                     if (AreItemsNeighbor(c1, c2))
                     {
                         IsBusy = true;

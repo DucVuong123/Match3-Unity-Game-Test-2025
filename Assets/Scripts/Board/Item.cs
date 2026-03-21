@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using UnityEditor.VersionControl;
 
 [Serializable]
 public class Item
@@ -11,6 +12,7 @@ public class Item
 
     public Transform View { get; private set; }
 
+    private static Dictionary<string, GameObject> s_prefabCache = new Dictionary<string, GameObject>();
 
     public virtual void SetView()
     {
@@ -18,7 +20,18 @@ public class Item
 
         if (!string.IsNullOrEmpty(prefabname))
         {
-            GameObject prefab = Resources.Load<GameObject>(prefabname);
+            GameObject prefab;
+            if (!s_prefabCache.TryGetValue(prefabname, out prefab))
+            {
+                prefab = Resources.Load<GameObject>(prefabname);
+                s_prefabCache[prefabname] = prefab;
+            }
+
+            //Resources.Load("prefabs/itemNormalBase") dùng path dạng chuỗi.
+            //Mỗi lần gọi là Unity phải tra cứu asset theo path đó nên rất tốn chi phí
+
+
+            //GameObject prefab = Resources.Load<GameObject>(prefabname);
             if (prefab)
             {
                 View = GameObject.Instantiate(prefab).transform;
